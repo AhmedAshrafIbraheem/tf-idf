@@ -1,6 +1,9 @@
-from math import log10
+from math import log10, sqrt
 from pyspark import SparkContext
 from re import findall
+from pathlib import Path
+
+convention_dir_name = "tf_idf"
 
 
 def split_filter(doc: str):
@@ -16,6 +19,18 @@ def flatmap_terms(doc):
     for term in doc[1]:
         terms.append(((doc_num, size, term), 1))
     return terms
+
+
+def check_if_dir_exist():
+    convention_dir_path = Path(convention_dir_name)
+    return convention_dir_path.exists()
+
+
+def delete_dir_if_exist():
+    import shutil
+    convention_dir_path = Path(convention_dir_name)
+    if convention_dir_path.exists():
+        shutil.rmtree(convention_dir_path)
 
 
 def tf_idf(file_name):
@@ -76,6 +91,53 @@ def tf_idf(file_name):
     # Output: [(termj, [(doci, tf-idf), ....]) ...]
     # <<<<< End Phase6
 
-    printers = tf_idf_grouped.collect()
-    for printer in printers:
-        print(printer)
+    delete_dir_if_exist()
+    tf_idf_grouped.saveAsTextFile(convention_dir_name)
+
+
+def splitter(term: str):
+    loc = term.index("'", 2)
+    name = term[2: loc]
+
+    ret = []
+    docs = term[loc + 4: -2].split(', ')
+    for i in range(0, len(docs), 2):
+        ret.append((int(docs[i][1:]), float(docs[i+1][:-1])))
+
+    return name, ret
+
+
+def query(query_term: str):
+    if not check_if_dir_exist():
+        print("No Documents has been read Yet")
+        return
+
+    sc = SparkContext.getOrCreate()
+    tf_idf_grouped = sc.textFile(convention_dir_name).map(splitter)
+
+    term_tuple = tf_idf_grouped.filter(lambda x: query_term.__eq__(x[0])).take(1)
+    if len(term_tuple) < 1:
+        print("Term Not Found")
+        return
+
+    term_tuple = term_tuple[0]
+    term = {}
+    term_size = 0
+    for doc in term_tuple[1]:
+        term[doc[0]] = doc[1]
+        term_size += doc[1] * doc[1]
+    term_size = sqrt(term_size)
+
+    def compute_similarity(current):
+        dot_product = 0
+        current_size = 0
+        for element in current[1]:
+            current_size += element[1] * element[1]
+            if element[0] in term:
+                dot_product += term[element[0]] * element[1]
+        current_size = sqrt(current_size)
+        return dot_product / current_size / term_size, current[0]
+
+    similarities = tf_idf_grouped.map(compute_similarity).sortByKey(False)
+    for term in similarities.collect():
+        print(term)

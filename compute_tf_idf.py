@@ -96,10 +96,7 @@ def tf_idf(file_name):
 
 
 def splitter(term: str):
-    quote = "'"
-    if not term[1].__eq__(quote):
-        quote = term[1]
-    loc = term.index(quote, 2)
+    loc = term.index(term[1], 2)
     name = term[2: loc]
 
     ret = []

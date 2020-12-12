@@ -7,7 +7,7 @@ def app():
         user_input = input(">>> ").split()
         keyword = user_input[0].lower()
         if keyword.__eq__('tf_idf'):
-            tf_idf("/home/ahmed/Desktop/Tf-Idf/project2_test.txt")
+            tf_idf("project2_demo.txt")
         elif keyword.__eq__('query'):
             query(" ".join(user_input[1:]))
         elif keyword.__eq__('exit'):

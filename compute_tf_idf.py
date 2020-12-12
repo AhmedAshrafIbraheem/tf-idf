@@ -138,6 +138,6 @@ def query(query_term: str):
         current_size = sqrt(current_size)
         return dot_product / current_size / term_size, current[0]
 
-    similarities = tf_idf_grouped.map(compute_similarity).sortByKey(False)
-    for term in similarities.collect():
-        print(term)
+    similarities = tf_idf_grouped.map(compute_similarity)
+    for sim in similarities.top(11):
+        print(sim)

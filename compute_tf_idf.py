@@ -34,7 +34,7 @@ def delete_dir_if_exist():
 
 
 def tf_idf(file_name):
-    sc = SparkContext("local", "Spark_Project")
+    sc = SparkContext.getOrCreate()
     docs_rdd = sc.textFile(file_name)
 
     docs_num = docs_rdd.count()
@@ -139,5 +139,10 @@ def query(query_term: str):
         return dot_product / current_size / term_size, current[0]
 
     similarities = tf_idf_grouped.map(compute_similarity)
+
+    # sorted_similarities = similarities.sortByKey(False).collect()
+    # for i in range(11):
+    #     print(sorted_similarities[i])
+
     for sim in similarities.top(11):
         print(sim)

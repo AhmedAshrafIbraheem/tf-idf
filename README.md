@@ -1,5 +1,5 @@
 # tf-idf & similarity queries (Big DATA Class 2nd Project)
-================================================================================================
+
 
 ## 1 MapReduce: Step-by-step design
 
